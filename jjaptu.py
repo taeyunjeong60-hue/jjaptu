@@ -3,7 +3,7 @@ import pygame, socket
 import sys
 
 #클라이언트 함수
-HOST='localhost'
+HOST='127.0.0.1'
 PORT= 65535
 
 with socket.socket(socket.AF_INET,socket.SOCK_STREAM) as s:
@@ -32,8 +32,8 @@ make_room=game_enter_font.render("방 만들기",True,WHITE)
 make_room_rect=make_room.get_rect(center=(150,100))
 
 #이미지 불러오기
-background=pygame.image.load("C:/Users/APP_1/Desktop/정태윤/pythoncert/game_s/짭투 개발/이미지 모음/background.png")
-game_enter_background=pygame.image.load("C:/Users/APP_1/Desktop/정태윤/pythoncert/game_s/짭투 개발/이미지 모음/game_enter_background.png")
+background=pygame.image.load("C:/Users/APP_1/Desktop/정태윤/pythoncert/game_s/jjaptu/이미지 모음/background.png")
+game_enter_background=pygame.image.load("C:/Users/APP_1/Desktop/정태윤/pythoncert/game_s/jjaptu/이미지 모음/game_enter_background.png")
 
 #영역 정하기
 game_enter_click_rect=pygame.Rect(screen_width//2-205,screen_height//2+45,410,200)

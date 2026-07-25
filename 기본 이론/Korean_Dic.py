@@ -1,8 +1,12 @@
 import requests
 import json
+import os
+from dotenv import load_dotenv
 
+load_dotenv()
 Userinput=input("단어 입력:")
-apikey="8392370E3F14C500277E590A1F542B46"
+apikey=os.getenv("korean_dic_api_key")
+print(apikey)
 url = "https://stdict.korean.go.kr/api/search.do"
 
 params = {
