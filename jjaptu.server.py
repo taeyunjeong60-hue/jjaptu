@@ -15,8 +15,12 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
     while True:
         read,write,error=select.select([s],[],[])
         for sock in read:
-            conn,addr=s.accept()    
-        
-    
+            if sock==s:#신규 클라이언트 접속
+                newsock,addr=s.accept()
+                print("클라이언트 접속:{addr}")
+                readsocks.append(newsock)
+            else:#이미 접속한 클라이언트의 요청
+                conn=sock
+                data=conn.recv(1024).decode("utf-8")
+                print(f'데이터:{data}')
 
-    
