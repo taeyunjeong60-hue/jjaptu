@@ -44,6 +44,7 @@ with socket.socket(socket.AF_INET,socket.SOCK_STREAM) as s: #서버 입장
     running=True
     show_thumbscreen=True
     while running:
+        
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running=False        
@@ -56,8 +57,7 @@ with socket.socket(socket.AF_INET,socket.SOCK_STREAM) as s: #서버 입장
 
                 
                 if make_room_rect.collidepoint(event.pos):
-                    print("click")
-                    s.sendall("makeroom".encode("utf-8"))
+                    s.sendall("makeroom".encode('utf-8'))
                     
             if show_thumbscreen:
                 screen.blit(background,(0,0))
