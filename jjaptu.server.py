@@ -17,7 +17,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         for broadcast in client_sockets:
             if broadcast != send_sock:
                 try:
-                    broadcast.sendall("makeroom".decode('uft-8'))
+                    broadcast.sendto("makeroom".encode('utf-8'),(HOST,POST))
                 except Exception as e:
                     print(f"전송 실패:{e}")
 
