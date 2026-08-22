@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
 <body>
-    <h1>2026-08-15</h1>
+    <h1>2026-08-22</h1>
     <h5>프로젝트 소개</h5>
     <h3>한국어 끝말잇기 게임 '끄투'에 영감받아 만든 한국어 자음 모음 게임</h3><br>
     <h3>현재 기능</h3>
