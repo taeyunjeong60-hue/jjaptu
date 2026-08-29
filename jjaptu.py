@@ -3,11 +3,8 @@ import pygame, socket
 import sys
 
 #클라이언트 함수
-HOST='127.0.0.1'
+HOST='172.30.1.73'
 PORT= 65535
-
-with socket.socket(socket.AF_INET,socket.SOCK_STREAM) as s:
-    s.connect((HOST,PORT))
 
 #색깔 정의
 WHITEGRAY=(100,100,100)
