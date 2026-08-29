@@ -13,12 +13,14 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
     print("서버 시작")
     readsocks=[s]
 
-    def makeroom(client_sockets,send_sock):
+    def makeroom(client_sockets,send_sock,msg):
+        import re
         for broadcast in client_sockets:
             if broadcast != send_sock:
                 try:
-                    print(send_sock)
-                    broadcast.sendto("makeroom".encode('utf-8'),(HOST,POST))
+                    values=re.findall(r"[\d.]+", str(broadcast))
+                    print((values[-2],int(values[-1])))
+                    broadcast.sendto(msg.encode('utf-8'),(values[-2],int(values[-1])))
                 except Exception as e:
                     print(f"전송 실패:{e}")
 
@@ -34,7 +36,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 data=sock.recv(1024).decode('utf-8')
                 if data:
                     if data=="makeroom":
-                        makeroom(readsocks,sock)
+                        makeroom(readsocks,sock,"makeroom")
                 else:
                     print(f"disconnect:{sock.getpeername()}")
                     readsocks.remove(sock)
