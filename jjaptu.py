@@ -46,11 +46,12 @@ with socket.socket(socket.AF_INET,socket.SOCK_STREAM) as s: #서버 입장
     s.setblocking(False)
     while running:
 
+        #데이터 받기
         try:
             data=s.recv(1024).decode('utf-8')
 
             if data:
-                if data=="makeroom":
+                if data=="makeroom":#방 만들기
                     screen.blit(er,(er_r))
         except BlockingIOError:
             pass
@@ -59,17 +60,21 @@ with socket.socket(socket.AF_INET,socket.SOCK_STREAM) as s: #서버 입장
             if event.type == pygame.QUIT:
                 running=False        
 
+            #클릭 이벤트 감지
             if event.type == pygame.MOUSEBUTTONDOWN:
-                if show_t and ge_cr.collidepoint(event.pos):
+                if show_t and ge_cr.collidepoint(event.pos):#입장 버튼
                     show_t=False
                     screen.blit(gebg,(0,0))
                     screen.blit(mr,(mr_r))
                
-                if mr_r.collidepoint(event.pos):
+                if mr_r.collidepoint(event.pos):#방 만들기 버튼
                     s.send("makeroom".encode('utf-8'))
 
+                if er_r.collidepoint(event.pos):#방 입장 버튼
+                    print("click")
+
                     
-            if show_t:
+            if show_t:#시작 화면 보이기/보이지 않기
                 screen.blit(mbg,(0,0))
                 screen.blit(ge,(ge_r))
 

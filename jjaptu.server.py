@@ -12,8 +12,9 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
     s.listen()
     print("서버 시작")
     readsocks=[s]
+    rooms=[]
 
-    def makeroom(client_sockets,send_sock,msg):
+    def broadcast(client_sockets,send_sock,msg):
         import re
         for broadcast in client_sockets:
             if broadcast != send_sock:
@@ -36,7 +37,11 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 data=sock.recv(1024).decode('utf-8')
                 if data:
                     if data=="makeroom":
-                        makeroom(readsocks,sock,"makeroom")
+                        rooms.append([])
+                        broadcast(readsocks,sock,"makeroom")
+                    if data=="enter":
+                        rooms[0].append(sock)
+                        sock.send("enter")                        
                 else:
                     print(f"disconnect:{sock.getpeername()}")
                     readsocks.remove(sock)
