@@ -3,8 +3,9 @@ import pygame, socket
 import sys
 
 #클라이언트 함수
-HOST='172.30.1.73'
 PORT= 65535
+
+
 
 #색깔 정의
 WHITEGRAY=(100,100,100)
@@ -25,24 +26,27 @@ font=pygame.font.SysFont("malgungothic", 40)
 er_f=pygame.font.SysFont("malgungothic", 20)
 
 ge=font.render("입장하기",True,DARKGRAY)
-ge_r=ge.get_rect(center=(screen_width//2,screen_height//2+145))
+ge_r=ge.get_rect(center=(screen_width//2,screen_height//2+195))
 mr=font.render("방 만들기",True,WHITE)
 mr_r=mr.get_rect(center=(150,100))
 er=font.render("방 입장",True,WHITE)
 er_r=er.get_rect(center=(400,100))
 
 #이미지 불러오기
-mbg=pygame.image.load("C:/Users/APP_1/Desktop/정태윤/pythoncert/game_s/jjaptu/이미지 모음/background.png")
-gebg=pygame.image.load("C:/Users/APP_1/Desktop/정태윤/pythoncert/game_s/jjaptu/이미지 모음/game_enter_background.png")
+mbg=pygame.image.load("C:/Users/APP_6/Desktop/정태윤/jjaptu/이미지 모음/background.png")
+gebg=pygame.image.load("C:/Users/APP_6/Desktop/정태윤/jjaptu/이미지 모음/game_enter_background.png")
 
 #영역 정하기
-ge_cr=pygame.Rect(screen_width//2-205,screen_height//2+45,410,200)
+ni_r=pygame.Rect(screen_width//2-150,screen_height//2+80,300,50)
+ge_cr=pygame.Rect(screen_width//2-205,screen_height//2+150,410,90)
 
 #프레임 제작
 with socket.socket(socket.AF_INET,socket.SOCK_STREAM) as s: #서버 입장
     s.connect((HOST,PORT))
     running=True
     show_t=True
+    in_r=False
+    rooms=[]#방 저장 함수
     s.setblocking(False)
     while running:
 
@@ -61,7 +65,12 @@ with socket.socket(socket.AF_INET,socket.SOCK_STREAM) as s: #서버 입장
                 running=False        
 
             #클릭 이벤트 감지
-            if event.type == pygame.MOUSEBUTTONDOWN:
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                if show_t and ni_r.collidepoint(event.pos):#이름 입력
+                    if event.type == pygame.KEYDOWN:
+                        print("여기서 부터 이어서")#https://makerejoicegames.tistory.com/177#google_vignette
+
+
                 if show_t and ge_cr.collidepoint(event.pos):#입장 버튼
                     show_t=False
                     screen.blit(gebg,(0,0))
@@ -69,14 +78,22 @@ with socket.socket(socket.AF_INET,socket.SOCK_STREAM) as s: #서버 입장
                
                 if mr_r.collidepoint(event.pos):#방 만들기 버튼
                     s.send("makeroom".encode('utf-8'))
+                    rooms.append(["me"])
+                    in_r=True
 
                 if er_r.collidepoint(event.pos):#방 입장 버튼
-                    print("click")
+                    s.send("enterroom".encode('utf-8'))
+                    in_r=True
+
+            elif event.type==pygame.KEYDOWN:
+                if event.key==pygame.K_ESCAPE and in_r==False:#esc버튼 누를 시 메인화면
+                    show_t=True
 
                     
             if show_t:#시작 화면 보이기/보이지 않기
                 screen.blit(mbg,(0,0))
                 screen.blit(ge,(ge_r))
+                pygame.draw.rect(screen,WHITE,ni_r)
 
             pygame.display.update()
 

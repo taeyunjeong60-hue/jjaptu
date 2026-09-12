@@ -13,6 +13,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
     print("서버 시작")
     readsocks=[s]
     rooms=[]
+    name_dic={}
 
     def broadcast(client_sockets,send_sock,msg):
         import re
@@ -21,7 +22,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 try:
                     values=re.findall(r"[\d.]+", str(broadcast))
                     print((values[-2],int(values[-1])))
-                    broadcast.sendto(msg.encode('utf-8'),(values[-2],int(values[-1])))
+                    broadcast.sendto(f'{msg}{send_sock}'.encode('utf-8'),(values[-2],int(values[-1])))
                 except Exception as e:
                     print(f"전송 실패:{e}")
 
@@ -36,12 +37,17 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             else:#이미 접속한 클라이언트의 요청
                 data=sock.recv(1024).decode('utf-8')
                 if data:
+                    if "name" in data:
+                        name=data.split(",")
+                        name_dic[sock]=name[1]
+                        print(name_dic)
                     if data=="makeroom":
-                        rooms.append([])
+                        rooms.append([sock])
                         broadcast(readsocks,sock,"makeroom")
-                    if data=="enter":
+                        print(rooms)
+                    if data=="enterroom":
                         rooms[0].append(sock)
-                        sock.send("enter")                        
+                        sock.send("enterroom")                        
                 else:
                     print(f"disconnect:{sock.getpeername()}")
                     readsocks.remove(sock)
