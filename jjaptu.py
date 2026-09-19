@@ -1,8 +1,10 @@
 #모듈 불러오기
 import pygame, socket
 import sys
+import flask import url_for
 
 #클라이언트 함수
+HOST='192.168.0.37'
 PORT= 65535
 
 #색깔 정의
@@ -16,6 +18,7 @@ screen_width=1408
 screen_height=768
 screen=pygame.display.set_mode((screen_width,screen_height))
 
+pygame.key.start_text_input()
 pygame.init()
 pygame.time.Clock()
 
@@ -41,24 +44,37 @@ ni_r=pygame.Rect(screen_width//2-150,screen_height//2+80,300,50)
 ge_cr=pygame.Rect(screen_width//2-205,screen_height//2+150,410,90)
 
 #한국어 입력
-text=''
-eng_kor = {
-    'r': 'ㄱ', 'R': 'ㄲ', 's': 'ㄴ', 'e': 'ㄷ', 'E': 'ㄸ',
-    'f': 'ㄹ', 'a': 'ㅁ', 'q': 'ㅂ', 'Q': 'ㅃ', 't': 'ㅅ',
-    'T': 'ㅆ', 'd': 'ㅇ', 'w': 'ㅈ', 'W': 'ㅉ', 'c': 'ㅊ',
-    'z': 'ㅋ', 'x': 'ㅌ', 'v': 'ㅍ', 'g': 'ㅎ',
-    'k': 'ㅏ', 'o': 'ㅐ', 'i': 'ㅑ', 'O': 'ㅒ', 'j': 'ㅓ',
-    'p': 'ㅔ', 'u': 'ㅕ', 'P': 'ㅖ', 'h': 'ㅗ', 'hk': 'ㅘ',
-    'ho': 'ㅙ', 'hl': 'ㅚ', 'y': 'ㅛ', 'n': 'ㅜ', 'nj': 'ㅝ',
-    'np': 'ㅞ', 'nl': 'ㅟ', 'b': 'ㅠ', 'm': 'ㅡ', 'ml': 'ㅢ',
-    'l': 'ㅣ'
-}
+class InputField:
+    def __init__(self, size) -> None:
+        self.image = pygame.Surface(size, pygame.SRCALPHA)
+        self.image.fill((0, 0, 0, 255))
+        self.font = pygame.font.SysFont("malgungothic", size[1])
+        self.text = ""
+        self.edit_pos = 0
+        self.text_edit = False
+        self.text_editing = ""
+        
+    def event(self, event):
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_BACKSPACE:
+                self.text = self.text[:self.edit_pos-1] + self.text[self.edit_pos:]
+                self.edit_pos = max(0, self.edit_pos-1)
+        elif event.type == pygame.TEXTEDITING:
+            self.text_edit = True
+            self.text_editing = event.text
+            self.text_editing_pos = event.start
+        elif event.type == pygame.TEXTINPUT:
+            self.text_edit = False
+            self.text_editing = ""
+            self.text = self.text[:self.edit_pos] + event.text + self.text[self.edit_pos:]
+            self.edit_pos = min(self.edit_pos + len(event.text), len(self.text + self.text_editing))
+                
+    def render(self, surface):
+        surface.blit(self.image, self.image.get_rect(topleft=(200, 500)))
+        string = self.font.render(self.text + self.text_editing, True, (255, 255, 255))
+        surface.blit(string, string.get_rect(topleft=(200, 500)))
 
-def eng_to_kor(text):
-    result=''
-    for char in text:
-        result += eng_kor(char, char)
-    return result
+input_field=InputField((300,30))
 
 #프레임 제작
 with socket.socket(socket.AF_INET,socket.SOCK_STREAM) as s: #서버 입장
@@ -91,8 +107,8 @@ with socket.socket(socket.AF_INET,socket.SOCK_STREAM) as s: #서버 입장
                 if show_t and ni_r.collidepoint(event.pos):#이름 입력 상자 클릭
                     text=''
                     t_font = p_font.render(text, True, BLACK)
-                    t_input_bool = True
-                    
+                    t_input_bool=True
+                
                 if show_t and ge_cr.collidepoint(event.pos):#입장 버튼
                     show_t=False
                     screen.blit(gebg,(0,0))
@@ -111,24 +127,14 @@ with socket.socket(socket.AF_INET,socket.SOCK_STREAM) as s: #서버 입장
                 if event.key==pygame.K_ESCAPE and in_r==False:#esc버튼 누를 시 메인화면
                     show_t=True
 
-            pygame.key.start_text_input()
             
+
             if t_input_bool:
-                if event.type == pygame.KEYDOWN:#텍스트 입력(닉네임)
-                
-                    if event.key == pygame.K_RETURN:
-                        p_name = text
-                        text = ''
-                        t_input_bool = False
-                
-                    elif event.key == pygame.K_BACKSPACE:
-                        text = text[:-1]
-                
-                    else:
-                        text += event.unicode
-                
-                    t_font = p_font.render(text, True, BLACK)
-                    
+                if event.type==pygame.KEYDOWN:
+                    InputField.event(event)
+
+            input_field.render(screen)
+
             if show_t:#시작 화면 보이기/보이지 않기
                 screen.blit(mbg,(0,0))
                 screen.blit(ge,(ge_r))
