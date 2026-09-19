@@ -41,13 +41,15 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                         name=data.split(",")
                         name_dic[sock]=name[1]
                         print(name_dic)
-                    if data=="makeroom":
+
+                    elif data=="makeroom":
                         rooms.append([sock])
                         broadcast(readsocks,sock,"makeroom")
                         print(rooms)
-                    if data=="enterroom":
+
+                    elif data=="enterroom":
                         rooms[0].append(sock)
-                        sock.send("enterroom")                        
+                        sock.send("enterroom") 
                 else:
                     print(f"disconnect:{sock.getpeername()}")
                     readsocks.remove(sock)

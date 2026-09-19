@@ -5,8 +5,6 @@ import sys
 #클라이언트 함수
 PORT= 65535
 
-
-
 #색깔 정의
 WHITEGRAY=(100,100,100)
 DARKGRAY=(30,30,30)
@@ -22,6 +20,7 @@ pygame.init()
 pygame.time.Clock()
 
 #폰트 정하기&글자 정하기
+p_font=pygame.font.SysFont("malgungothic", 30)
 font=pygame.font.SysFont("malgungothic", 40)
 er_f=pygame.font.SysFont("malgungothic", 20)
 
@@ -31,6 +30,7 @@ mr=font.render("방 만들기",True,WHITE)
 mr_r=mr.get_rect(center=(150,100))
 er=font.render("방 입장",True,WHITE)
 er_r=er.get_rect(center=(400,100))
+t_font = p_font.render("이름 입력", True, BLACK)
 
 #이미지 불러오기
 mbg=pygame.image.load("C:/Users/APP_6/Desktop/정태윤/jjaptu/이미지 모음/background.png")
@@ -40,12 +40,34 @@ gebg=pygame.image.load("C:/Users/APP_6/Desktop/정태윤/jjaptu/이미지 모음
 ni_r=pygame.Rect(screen_width//2-150,screen_height//2+80,300,50)
 ge_cr=pygame.Rect(screen_width//2-205,screen_height//2+150,410,90)
 
+#한국어 입력
+text=''
+eng_kor = {
+    'r': 'ㄱ', 'R': 'ㄲ', 's': 'ㄴ', 'e': 'ㄷ', 'E': 'ㄸ',
+    'f': 'ㄹ', 'a': 'ㅁ', 'q': 'ㅂ', 'Q': 'ㅃ', 't': 'ㅅ',
+    'T': 'ㅆ', 'd': 'ㅇ', 'w': 'ㅈ', 'W': 'ㅉ', 'c': 'ㅊ',
+    'z': 'ㅋ', 'x': 'ㅌ', 'v': 'ㅍ', 'g': 'ㅎ',
+    'k': 'ㅏ', 'o': 'ㅐ', 'i': 'ㅑ', 'O': 'ㅒ', 'j': 'ㅓ',
+    'p': 'ㅔ', 'u': 'ㅕ', 'P': 'ㅖ', 'h': 'ㅗ', 'hk': 'ㅘ',
+    'ho': 'ㅙ', 'hl': 'ㅚ', 'y': 'ㅛ', 'n': 'ㅜ', 'nj': 'ㅝ',
+    'np': 'ㅞ', 'nl': 'ㅟ', 'b': 'ㅠ', 'm': 'ㅡ', 'ml': 'ㅢ',
+    'l': 'ㅣ'
+}
+
+def eng_to_kor(text):
+    result=''
+    for char in text:
+        result += eng_kor(char, char)
+    return result
+
 #프레임 제작
 with socket.socket(socket.AF_INET,socket.SOCK_STREAM) as s: #서버 입장
     s.connect((HOST,PORT))
+    
     running=True
     show_t=True
     in_r=False
+    t_input_bool=False
     rooms=[]#방 저장 함수
     s.setblocking(False)
     while running:
@@ -66,11 +88,11 @@ with socket.socket(socket.AF_INET,socket.SOCK_STREAM) as s: #서버 입장
 
             #클릭 이벤트 감지
             elif event.type == pygame.MOUSEBUTTONDOWN:
-                if show_t and ni_r.collidepoint(event.pos):#이름 입력
-                    if event.type == pygame.KEYDOWN:
-                        print("여기서 부터 이어서")#https://makerejoicegames.tistory.com/177#google_vignette
-
-
+                if show_t and ni_r.collidepoint(event.pos):#이름 입력 상자 클릭
+                    text=''
+                    t_font = p_font.render(text, True, BLACK)
+                    t_input_bool = True
+                    
                 if show_t and ge_cr.collidepoint(event.pos):#입장 버튼
                     show_t=False
                     screen.blit(gebg,(0,0))
@@ -89,11 +111,29 @@ with socket.socket(socket.AF_INET,socket.SOCK_STREAM) as s: #서버 입장
                 if event.key==pygame.K_ESCAPE and in_r==False:#esc버튼 누를 시 메인화면
                     show_t=True
 
+            pygame.key.start_text_input()
+            
+            if t_input_bool:
+                if event.type == pygame.KEYDOWN:#텍스트 입력(닉네임)
+                
+                    if event.key == pygame.K_RETURN:
+                        p_name = text
+                        text = ''
+                        t_input_bool = False
+                
+                    elif event.key == pygame.K_BACKSPACE:
+                        text = text[:-1]
+                
+                    else:
+                        text += event.unicode
+                
+                    t_font = p_font.render(text, True, BLACK)
                     
             if show_t:#시작 화면 보이기/보이지 않기
                 screen.blit(mbg,(0,0))
                 screen.blit(ge,(ge_r))
                 pygame.draw.rect(screen,WHITE,ni_r)
+                screen.blit(t_font,(screen_width//2-150,screen_height//2+80))
 
             pygame.display.update()
 
