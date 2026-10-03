@@ -5,10 +5,10 @@ import select
 client_socket=()
 
 HOST=''
-POST=65535
+PORT=65535
 
 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-    s.bind((HOST,POST))
+    s.bind((HOST,PORT))
     s.listen()
     print("서버 시작")
     readsocks=[s]

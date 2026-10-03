@@ -1,10 +1,10 @@
 #모듈 불러오기
 import pygame, socket
 import sys
-import flask import url_for
+import os
 
 #클라이언트 함수
-HOST='192.168.0.37'
+HOST='172.30.1.73'
 PORT= 65535
 
 #색깔 정의
@@ -36,8 +36,14 @@ er_r=er.get_rect(center=(400,100))
 t_font = p_font.render("이름 입력", True, BLACK)
 
 #이미지 불러오기
-mbg=pygame.image.load("C:/Users/APP_6/Desktop/정태윤/jjaptu/이미지 모음/background.png")
-gebg=pygame.image.load("C:/Users/APP_6/Desktop/정태윤/jjaptu/이미지 모음/game_enter_background.png")
+BASE_DIR=os.path.dirname(__file__)
+
+backgroundimg_path=os.path.join(BASE_DIR,'image','background.png')
+game_enter_backgroundimg_path=os.path.join(BASE_DIR,'image','game_enter_background.png')
+
+
+mbg=pygame.image.load(backgroundimg_path)
+gebg=pygame.image.load(game_enter_backgroundimg_path)
 
 #영역 정하기
 ni_r=pygame.Rect(screen_width//2-150,screen_height//2+80,300,50)
@@ -74,7 +80,7 @@ class InputField:
         string = self.font.render(self.text + self.text_editing, True, (255, 255, 255))
         surface.blit(string, string.get_rect(topleft=(200, 500)))
 
-input_field=InputField((300,30))
+nikname=InputField((300,30))
 
 #프레임 제작
 with socket.socket(socket.AF_INET,socket.SOCK_STREAM) as s: #서버 입장
@@ -133,7 +139,7 @@ with socket.socket(socket.AF_INET,socket.SOCK_STREAM) as s: #서버 입장
                 if event.type==pygame.KEYDOWN:
                     InputField.event(event)
 
-            input_field.render(screen)
+            nikname.render(screen)
 
             if show_t:#시작 화면 보이기/보이지 않기
                 screen.blit(mbg,(0,0))
