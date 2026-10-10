@@ -1,30 +1,30 @@
 #서버
-import socket
-import select
-
-client_socket=()
+import websockets
+import asyncio
 
 HOST=''
 PORT=65535
+
+connected_clients=set()
+rooms=[]
+name_dic={}
 
 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
     s.bind((HOST,PORT))
     s.listen()
     print("서버 시작")
-    readsocks=[s]
-    rooms=[]
-    name_dic={}
+    
 
-    def broadcast(client_sockets,send_sock,msg):
-        import re
-        for broadcast in client_sockets:
-            if broadcast != send_sock:
-                try:
-                    values=re.findall(r"[\d.]+", str(broadcast))
-                    print((values[-2],int(values[-1])))
-                    broadcast.sendto(f'{msg}{send_sock}'.encode('utf-8'),(values[-2],int(values[-1])))
-                except Exception as e:
-                    print(f"전송 실패:{e}")
+def broadcast(client_sockets,send_sock,msg):
+    import re
+    for broadcast in client_sockets:
+        if broadcast != send_sock:
+            try:
+                values=re.findall(r"[\d.]+", str(broadcast))
+                print((values[-2],int(values[-1])))
+                broadcast.sendto(f'{msg}{send_sock}'.encode('utf-8'),(values[-2],int(values[-1])))
+            except Exception as e:
+                print(f"전송 실패:{e}")
 
     
     while True:
