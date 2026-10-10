@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
 <body>
-    <h1>2026-09-19</h1>
+    <h1>2026-10-10</h1>
     <h5>프로젝트 소개</h5>
     <h3>한국어 끝말잇기 게임 '끄투'에 영감받아 만든 한국어 자음, 모음 게임</h3><br>
     <h3>현재 기능</h3>
@@ -20,13 +20,13 @@
     </ul>
     <h3>다음 목표</h3>
     <ul>
-        <li>게임 내부 시스템 구현</li>
-        <li>방 입장 기능 추가</li>
+        <li>websocket으로 코드 변경</li>
+        <li>html로 짭투 화면 틀 제작</li>
     </ul>
     <h3>예상 실패</h3>
     <ul>
-        <li>같은 닉네임의 플레이어 생성</li>
-        <li>게임 시작 시 튕김</li>
+        <li>build 오류</li>
+        <li>html 오류</li>
     </ul>
 </body>
 </html>

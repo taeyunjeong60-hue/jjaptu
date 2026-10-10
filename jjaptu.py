@@ -4,7 +4,7 @@ import asyncio
 import os
 
 #클라이언트 함수
-HOST = "192.168.0.54"
+HOST = "172.30.1.73"
 
 #색깔 정의
 WHITEGRAY=(100,100,100)
