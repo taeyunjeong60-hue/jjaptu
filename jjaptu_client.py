@@ -19,12 +19,6 @@ DARKGRAY = (30, 30, 30)
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
-#--------이미지 불러오기 함수--------
-def load_image(path):
-    image = pygame.image.load(path)
-    return image.convert_alpha() if image.get_alpha() is not None else image.convert()
-
-
 #--------서버 메시지 수신 함수--------
 async def receive_messages(websocket, incoming):
     """서버 메시지를 별도 작업에서 수신해 Pygame 화면 루프가 멈추지 않게 한다."""
@@ -64,20 +58,6 @@ async def main():
     name_rect = pygame.Rect(SCREEN_WIDTH // 2 - 150, SCREEN_HEIGHT // 2 + 80, 300, 50)
     enter_button_rect = pygame.Rect(SCREEN_WIDTH // 2 - 205, SCREEN_HEIGHT // 2 + 150, 410, 90)
     back_rect = pygame.Rect(30, SCREEN_HEIGHT - 80, 180, 48)
-
-    #--------배경 이미지 불러오기--------
-    image_dir = os.path.join(BASE_DIR, "image")
-    try:
-        background = load_image(os.path.join(image_dir, "background.png"))
-        lobby_background = load_image(os.path.join(image_dir, "game_enter_background.png"))
-    except (pygame.error, OSError) as exc:
-        pygame.quit()
-        raise SystemExit(f"배경 이미지를 불러오지 못했습니다. image 폴더를 확인하세요.\n{exc}")
-
-    if background.get_size() != screen.get_size():
-        background = pygame.transform.smoothscale(background, screen.get_size())
-    if lobby_background.get_size() != screen.get_size():
-        lobby_background = pygame.transform.smoothscale(lobby_background, screen.get_size())
 
     #--------WebSocket 서버 연결--------
     uri = f"ws://{HOST}:{PORT}"
@@ -189,18 +169,18 @@ async def main():
 
                     #--------현재 화면 그리기--------
                     if page == "nickname":
-                        screen.blit(background, (0, 0))
+                        screen.blit(WHITE)
                         screen.blit(enter_text, enter_rect)
                         pygame.draw.rect(screen, WHITE, name_rect)
                         shown_name = nickname + editing_text
                         screen.blit(small_font.render(shown_name, True, BLACK), (name_rect.x + 10, name_rect.y + 10))
                     elif page == "lobby":
-                        screen.blit(lobby_background, (0, 0))
+                        screen.blit(WHITE)
                         screen.blit(make_text, make_rect)
                         screen.blit(join_text, join_rect)
                         draw_center_text(screen, small_font, "방 만들기를 눌러 새 방을 생성하세요.", (SCREEN_WIDTH // 2, 180))
                     else:
-                        screen.blit(lobby_background, (0, 0))
+                        screen.blit(WHITE)
                         draw_center_text(screen, title_font, "방 대기실", (SCREEN_WIDTH // 2, 100))
                         draw_center_text(screen, font, f"방 ID: {room_id}", (SCREEN_WIDTH // 2, 190))
                         draw_center_text(screen, font, f"방장: {room_owner}", (SCREEN_WIDTH // 2, 250))
