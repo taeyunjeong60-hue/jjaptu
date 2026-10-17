@@ -1,7 +1,7 @@
 //--------WebSocket 연결 설정--------
-const WS_PORT = 65535;
 const WS_PROTOCOL = location.protocol === 'https:' ? 'wss:' : 'ws:';
-const socketUrl = `${WS_PROTOCOL}//${location.hostname}:${WS_PORT}`;
+// HTTP 화면과 WebSocket 게임 서버가 같은 Render 포트를 사용합니다.
+const socketUrl = `${WS_PROTOCOL}//${location.host}/ws`;
 let socket;
 let nickname = '';
 let currentRoomId = '';

@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: jjaptu-beta
+    runtime: python
+    plan: free
+    region: singapore
+    buildCommand: pip install -r requirements-web.txt
+    startCommand: python web_app.py
+    healthCheckPath: /healthz
