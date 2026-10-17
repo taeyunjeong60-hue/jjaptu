@@ -62,7 +62,7 @@ function connect() {
         $('gameLog').replaceChildren();
         $('gameStatus').textContent = data.message || '게임이 시작되었습니다!';
         $('wordInput').disabled = false; $('submitWord').disabled = false;
-        $('gameend').disabled = true;
+        $('returnToRoom').disabled = true;
         addGameLog(data.message || '게임 시작');
         break;
       case 'game_round':
@@ -96,7 +96,7 @@ function connect() {
         renderScores(data.scores || []);
         addGameLog('게임 종료');
         toast('게임이 끝났습니다! 최종 점수를 확인하세요.');
-        $('gameend').disabled = false;
+        $('returnToRoom').disabled = false;
         break;
       case 'room_settings_ok':
         toast(data.message || '방 설정을 변경했습니다.'); break;
@@ -294,7 +294,9 @@ $('startGame').addEventListener('click', () => {
   if (gameActive) { toast('이미 게임이 진행 중입니다.'); return; }
   if (send('startgame')) { $('startGame').disabled = true; $('startGame').innerHTML = '게임 시작 요청 중...'; }
 });
-$('endgame').addEventListener('click', () => { $showPage('roomPage'); });
+$('returnToRoom').addEventListener('click', () => {
+  $showPage('room'); send('listrooms');
+});
 
 //--------프로그램 시작--------
 connect();
