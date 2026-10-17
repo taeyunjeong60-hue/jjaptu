@@ -245,7 +245,6 @@ $('copyRoomCode').addEventListener('click', async () => {
   try { await navigator.clipboard.writeText(currentRoomId); toast('방 코드를 복사했습니다.'); }
   catch { toast(`방 코드: ${currentRoomId}`); }
 });
-$('backToLobby').addEventListener('click', () => { send('leaveroom'); });
 $('leaveRoom').addEventListener('click', () => { send('leaveroom'); });
 function addGameLog(message) {
   const log = $('gameLog');
@@ -293,7 +292,6 @@ $('startGame').addEventListener('click', () => {
   if (gameActive) { toast('이미 게임이 진행 중입니다.'); return; }
   if (send('startgame')) { $('startGame').disabled = true; $('startGame').innerHTML = '게임 시작 요청 중...'; }
 });
-$('exitGame').addEventListener('click', () => { showPage('room'); toast('게임 화면을 나왔습니다. 진행 중인 게임은 계속됩니다.'); });
 
 //--------프로그램 시작--------
 connect();

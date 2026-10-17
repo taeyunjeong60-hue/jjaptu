@@ -39,7 +39,6 @@
     </section>
 
     <section id="roomPage" class="page content-page hidden">
-      <button id="backToLobby" class="back-button" type="button">← 로비로 돌아가기</button>
       <div class="room-title"><div><div class="eyebrow">WAITING ROOM</div><h1>게임 대기실</h1><p class="muted">친구들이 입장할 때까지 기다려 주세요.</p></div><div class="room-code"><span>ROOM CODE</span><strong id="roomCode">------</strong><button id="copyRoomCode" class="text-button" type="button">복사</button></div></div>
       <div class="glass-card room-settings-card">
         <div class="room-settings-icon">⚙</div>
@@ -49,7 +48,6 @@
       <div class="room-actions"><button id="leaveRoom" class="secondary-button" type="button">방 나가기</button><button id="startGame" class="primary-button" type="button">게임 시작 <span>↗</span></button></div>
     </section>
     <section id="gamePage" class="page content-page hidden">
-      <div class="game-topline"><button id="exitGame" class="back-button" type="button">← 대기실로</button><div class="eyebrow">LIVE WORD CHALLENGE</div></div>
       <div class="game-heading"><div><div class="eyebrow">ROUND <span id="gameRoundEyebrow">1</span></div><h1>자음과 모음을 <span>찾아라!</span></h1><p class="muted">제시된 자음과 모음이 모두 들어 있는 표준어를 가장 먼저 입력하세요.</p></div><div class="timer-card"><span>남은 시간</span><strong id="gameTimer">30</strong><small>초</small></div></div>
       <div class="glass-card prompt-card"><div class="prompt-label">이번 라운드의 글자</div><div class="prompt-letters"><div><small>자음</small><strong id="promptConsonant">ㄱ</strong></div><span class="prompt-plus">+</span><div><small>모음</small><strong id="promptVowel">ㅏ</strong></div></div><div id="gameStatus" class="game-status" aria-live="polite">게임 시작을 기다리는 중...</div>
         <form id="wordForm" class="word-form"><input id="wordInput" maxlength="20" placeholder="조건에 맞는 단어 입력" autocomplete="off" disabled required><button id="submitWord" class="primary-button" type="submit" disabled>정답 제출 <span>↗</span></button></form>

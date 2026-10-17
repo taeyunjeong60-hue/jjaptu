@@ -28,5 +28,7 @@
         <li>build 오류</li>
         <li>html 오류</li>
     </ul>
+    <h3>링크<h3>
+    <p>https://jjaptu-beta.onrender.com<p>
 </body>
 </html>
