@@ -16,9 +16,24 @@ let gameTimerInterval = null;
 let gameRoundSeconds = 30;
 let gameEndsAt = 0;
 let gameActive = false;
+let hasSurrendered = false;
 
 //--------화면 요소--------
 const $ = (id) => document.getElementById(id);
+// 정답 입력창에서 붙여넣기와 드래그 앤 드롭 입력 차단
+$('wordInput').addEventListener('paste', (event) => {
+    event.preventDefault();
+    toast('정답은 직접 입력해주세요.');
+});
+
+$('wordInput').addEventListener('drop', (event) => {
+    event.preventDefault();
+    toast('정답은 직접 입력해주세요.');
+});
+
+$('wordInput').addEventListener('contextmenu', (event) => {
+    event.preventDefault();
+});
 const pages = { nickname: $('nicknamePage'), lobby: $('lobbyPage'), room: $('roomPage'), game: $('gamePage') };
 function showPage(name) {
   Object.entries(pages).forEach(([key, node]) => node.classList.toggle('hidden', key !== name));
@@ -57,12 +72,22 @@ function connect() {
         break;
       case 'game_started':
         gameActive = true;
-        $('startGame').disabled = true; $('startGame').innerHTML = '게임 진행 중 <span>⌁</span>';
+        hasSurrendered = false;
+
+        $('startGame').disabled = true;
+        $('startGame').innerHTML = '게임 진행 중 <span>⌁</span>';
+
         showPage('game');
         $('gameLog').replaceChildren();
-        $('gameStatus').textContent = data.message || '게임이 시작되었습니다!';
-        $('wordInput').disabled = false; $('submitWord').disabled = false;
+        $('gameStatus').textContent =
+            data.message || '게임이 시작되었습니다!';
+
+        $('wordInput').value = '';
+        $('wordInput').disabled = false;
+        $('submitWord').disabled = false;
+        $('surrenderButton').disabled = true;
         $('returnToRoom').disabled = true;
+
         addGameLog(data.message || '게임 시작');
         break;
       case 'game_round':
@@ -71,8 +96,15 @@ function connect() {
         break;
       case 'word_result':
         $('gameStatus').textContent = data.message || '';
-        $('wordInput').disabled = false; $('submitWord').disabled = false;
-        if (data.ok) addGameLog(data.message || '정답');
+
+        if (!hasSurrendered && gameActive) {
+            $('wordInput').disabled = false;
+            $('submitWord').disabled = false;
+        }
+
+        if (data.ok) {
+            addGameLog(data.message || '정답');
+        }
         break;
       case 'word_accepted':
         $('gameStatus').textContent = data.message || '정답입니다!';
@@ -82,6 +114,22 @@ function connect() {
         renderScores(data.scores || []);
         if (data.fallback_mode) $('gameStatus').textContent += ' · 데모 모드(사전 API 키 미설정)';
         break;
+      case 'surrender_update': {
+          const surrendered = data.surrendered_nicknames || [];
+
+          hasSurrendered = surrendered.includes(nickname);
+
+          if (hasSurrendered) {
+              $('wordInput').disabled = true;
+              $('submitWord').disabled = true;
+              $('surrenderButton').disabled = true;
+          }
+
+          $('gameStatus').textContent = data.message || '기권 상태가 갱신되었습니다.';
+
+          addGameLog(data.message || '기권 상태 갱신');
+          break;
+      }
       case 'round_timeout':
         $('gameStatus').textContent = data.message || '시간이 끝났습니다.';
         addGameLog(data.message || '시간 종료');
@@ -89,13 +137,24 @@ function connect() {
         break;
       case 'game_over':
         gameActive = false;
-        $('startGame').disabled = !currentIsOwner; $('startGame').innerHTML = '다시 시작 <span>↗</span>';
+        hasSurrendered = false;
+
+        $('startGame').disabled = !currentIsOwner;
+        $('startGame').innerHTML = '다시 시작 <span>↗</span>';
+
         stopGameTimer();
+
         $('gameStatus').textContent = '모든 라운드가 끝났습니다!';
-        $('wordInput').disabled = true; $('submitWord').disabled = true;
+        $('wordInput').value = '';
+        $('wordInput').disabled = true;
+        $('submitWord').disabled = true;
+        $('surrenderButton').disabled = true;
+
         renderScores(data.scores || []);
         addGameLog('게임 종료');
+
         toast('게임이 끝났습니다! 최종 점수를 확인하세요.');
+
         $('returnToRoom').disabled = false;
         break;
       case 'room_settings_ok':
@@ -221,6 +280,9 @@ function openRoomSettings() {
   if (nickname !== currentRoomOwner) { toast('방장만 방 설정을 변경할 수 있습니다.'); return; }
   const roundsInput = document.querySelector(`input[name="editRounds"][value="${currentRounds}"]`);
   const playersInput = document.querySelector(`input[name="editMaxPlayers"][value="${currentMaxPlayers}"]`);
+  playersInput.addEventListener("paste", (event) => {
+      event.preventDefault();
+  });
   if (roundsInput) { roundsInput.checked = true; markSelectedOption(roundsInput); }
   if (playersInput) { playersInput.checked = true; markSelectedOption(playersInput); }
   roomSettingsModal.classList.remove('hidden');
@@ -274,7 +336,13 @@ function updateGameRound(data) {
   $('promptConsonant').textContent = data.consonant;
   $('promptVowel').textContent = data.vowel;
   $('gameStatus').textContent = `라운드 ${data.round}: 조건에 맞는 단어를 가장 먼저 제출하세요!`;
-  $('wordInput').value = ''; $('wordInput').disabled = false; $('submitWord').disabled = false;
+  hasSurrendered = false;
+
+  $('wordInput').value = '';
+  $('wordInput').disabled = false;
+  $('submitWord').disabled = false;
+  $('surrenderButton').disabled = false;
+
   $('wordInput').focus();
   renderScores(data.scores || []);
   gameRoundSeconds = Number(data.seconds || 30); gameEndsAt = Date.now() + gameRoundSeconds * 1000;
@@ -294,8 +362,31 @@ $('startGame').addEventListener('click', () => {
   if (gameActive) { toast('이미 게임이 진행 중입니다.'); return; }
   if (send('startgame')) { $('startGame').disabled = true; $('startGame').innerHTML = '게임 시작 요청 중...'; }
 });
+$('surrenderButton').addEventListener('click', () => {
+    if (!gameActive || hasSurrendered) {
+        return;
+    }
+
+    if (!confirm('이번 라운드에서 기권할까요?')) {
+        return;
+    }
+
+    if (send('surrender')) {
+        hasSurrendered = true;
+        $('wordInput').disabled = true;
+        $('submitWord').disabled = true;
+        $('surrenderButton').disabled = true;
+        $('gameStatus').textContent = '기권을 처리하고 있습니다...';
+    }
+});
 $('returnToRoom').addEventListener('click', () => {
-  $showPage('room'); send('listrooms');
+    if (gameActive) {
+        toast('게임이 끝난 뒤 대기실로 돌아갈 수 있습니다.');
+        return;
+    }
+
+    showPage('room');
+    send('listrooms');
 });
 
 //--------프로그램 시작--------

@@ -50,7 +50,32 @@
     <section id="gamePage" class="page content-page hidden">
       <div class="game-heading"><div><div class="eyebrow">ROUND <span id="gameRoundEyebrow">1</span></div><h1>자음과 모음을 <span>찾아라!</span></h1><p class="muted">제시된 자음과 모음이 모두 들어 있는 표준어를 가장 먼저 입력하세요.</p></div><div class="timer-card"><span>남은 시간</span><strong id="gameTimer">30</strong><small>초</small></div></div>
       <div class="glass-card prompt-card"><div class="prompt-label">이번 라운드의 글자</div><div class="prompt-letters"><div><small>자음</small><strong id="promptConsonant">ㄱ</strong></div><span class="prompt-plus">+</span><div><small>모음</small><strong id="promptVowel">ㅏ</strong></div></div><div id="gameStatus" class="game-status" aria-live="polite">게임 시작을 기다리는 중...</div>
-        <form id="wordForm" class="word-form"><input id="wordInput" maxlength="20" placeholder="조건에 맞는 단어 입력" autocomplete="off" disabled required><button id="submitWord" class="primary-button" type="submit" disabled>정답 제출 <span>↗</span></button></form>
+        <form id="wordForm" class="word-form">
+    <input
+        id="wordInput"
+        maxlength="20"
+        placeholder="조건에 맞는 단어 입력"
+        autocomplete="off"
+        disabled
+        required
+    >
+    <button
+        id="submitWord"
+        class="primary-button"
+        type="submit"
+        disabled
+    >
+        정답 제출 <span>↗</span>
+    </button>
+    <button
+        id="surrenderButton"
+        class="secondary-button"
+        type="button"
+        disabled
+    >
+        기권
+    </button>
+</form>
         <p class="game-help">정답 점수: 기본 10점 + 단어 글자 수 보너스 · 라운드 제한 시간 30초<br>사전 API 키가 없으면 데모 모드로 글자 조건만 검사합니다.</p>
       </div>
       <div class="game-lower-grid"><article class="glass-card score-card"><div class="section-heading"><div><div class="eyebrow">LEADERBOARD</div><h2>실시간 점수</h2></div><span class="count-pill" id="scorePlayerCount">0명</span></div><div id="scoreList" class="score-list"><div class="empty-state">점수가 여기에 표시됩니다.</div></div></article><article class="glass-card history-card"><div class="eyebrow">ROUND LOG</div><h2>게임 기록</h2><div id="gameLog" class="game-log"><div class="empty-state">게임 기록이 여기에 표시됩니다.</div></div></article></div>

@@ -193,6 +193,7 @@ async def advance_round(room_id, expected_round=None):
         await finish_game(room_id)
         return
     game["round"] += 1
+    game["surrendered"] = set()
     game["prompt"] = make_prompt()
     game["round_started_at"] = asyncio.get_running_loop().time()
     await broadcast_game(room_id, {
@@ -339,7 +340,14 @@ async def handler(websocket):
                     await send_json(websocket, {"type": "error", "message": "이미 게임이 진행 중입니다."})
                     continue
                 scores = {member: 0 for member in room["members"]}
-                room["game"] = {"active": True, "round": 0, "rounds_total": room.get("rounds", 10), "scores": scores, "used_words": set(), "prompt": None}
+                room["game"] = {
+                    "active": True,
+                    "round": 0,
+                    "rounds_total": room.get("rounds", 10),
+                    "scores": scores,
+                    "used_words": set(),
+                    "prompt": None,
+                }
                 await broadcast_game(room_id, {"type": "game_started", "room_id": room_id, "rounds": room["game"]["rounds_total"], "seconds": ROUND_SECONDS, "message": "게임이 시작되었습니다!"})
                 await advance_round(room_id)
 
@@ -355,6 +363,13 @@ async def handler(websocket):
                     game = room.get("game") if room else None
                     if not game or not game.get("active"):
                         await send_json(websocket, {"type": "word_result", "ok": False, "message": "현재 진행 중인 게임이 없습니다."})
+                        continue
+                    if websocket in game.get("surrendered", set()):
+                        await send_json(websocket, {
+                            "type": "word_result",
+                            "ok": False,
+                            "message": "이번 라운드에서 기권했으므로 제출할 수 없습니다."
+                        })
                         continue
                     if websocket not in game["scores"]:
                         game["scores"][websocket] = 0
@@ -395,6 +410,88 @@ async def handler(websocket):
                     # 첫 정답자만 점수를 얻고 즉시 다음 라운드로 넘어갑니다.
                     await advance_round(room_id, game["round"])
 
+                        #--------현재 라운드 기권--------
+            elif message == "surrender":
+                room_id = next(
+                    (
+                        rid for rid, room in rooms.items()
+                        if websocket in room["members"]
+                    ),
+                    None
+                )
+
+                if room_id is None:
+                    await send_json(websocket, {
+                        "type": "error",
+                        "message": "먼저 게임 방에 입장해주세요."
+                    })
+                    continue
+
+                async with GAME_LOCK:
+                    room = rooms.get(room_id)
+                    game = room.get("game") if room else None
+
+                    if not game or not game.get("active"):
+                        await send_json(websocket, {
+                            "type": "error",
+                            "message": "현재 진행 중인 게임이 없습니다."
+                        })
+                        continue
+
+                    if websocket not in game.get("scores", {}):
+                        await send_json(websocket, {
+                            "type": "error",
+                            "message": "현재 라운드에 참가할 수 없습니다."
+                        })
+                        continue
+
+                    surrendered = game.setdefault("surrendered", set())
+
+                    if websocket in surrendered:
+                        await send_json(websocket, {
+                            "type": "error",
+                            "message": "이미 이번 라운드에서 기권했습니다."
+                        })
+                        continue
+
+                    surrendered.add(websocket)
+
+                    participants = [
+                        member for member in room["members"]
+                        if member in game["scores"]
+                    ]
+
+                    surrendered_nicknames = [
+                        nickname_of(member)
+                        for member in participants
+                        if member in surrendered
+                    ]
+
+                    await broadcast_game(room_id, {
+                        "type": "surrender_update",
+                        "surrendered_nicknames": surrendered_nicknames,
+                        "surrendered_count": len(surrendered_nicknames),
+                        "total_players": len(participants),
+                        "message": (
+                            f"{nickname_of(websocket)}님이 기권했습니다. "
+                            f"({len(surrendered_nicknames)}/{len(participants)}명)"
+                        ),
+                    })
+
+                    # 모든 현재 참가자가 기권했을 때만 라운드를 종료합니다.
+                    if participants and all(
+                        member in surrendered for member in participants
+                    ):
+                        expected_round = game["round"]
+
+                        await broadcast_game(room_id, {
+                            "type": "round_timeout",
+                            "round": expected_round,
+                            "message": "모든 참가자가 기권했습니다. 다음 라운드로 넘어갑니다."
+                        })
+
+                        await advance_round(room_id, expected_round)
+            
             #--------방 목록 요청--------
             elif message == "listrooms":
                 await send_room_list(websocket)
