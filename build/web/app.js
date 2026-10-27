@@ -47,11 +47,105 @@ function send(message) {
   socket.send(message); return true;
 }
 
+
+//--------오디오 시스템: 외부 음원 파일 없이 Web Audio로 효과음/배경음 생성--------
+const GameAudio = (() => {
+  let ctx = null;
+  let master = null;
+  let muted = false;
+  let musicTimer = null;
+  let musicMode = 'lobby';
+  let musicStep = 0;
+  let lastRound = null;
+
+  function init() {
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextClass) return false;
+    if (!ctx) {
+      ctx = new AudioContextClass();
+      master = ctx.createGain();
+      master.gain.value = muted ? 0 : 0.22;
+      master.connect(ctx.destination);
+    }
+    if (ctx.state === 'suspended') ctx.resume();
+    return true;
+  }
+  function tone(freq, duration, type='sine', volume=0.18, delay=0, endFreq=null) {
+    if (!init()) return;
+    const start = ctx.currentTime + delay;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(Math.max(1, freq), start);
+    if (endFreq !== null) osc.frequency.exponentialRampToValueAtTime(Math.max(1, endFreq), start + duration);
+    gain.gain.setValueAtTime(0.0001, start);
+    gain.gain.exponentialRampToValueAtTime(Math.max(0.0002, volume), start + 0.012);
+    gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+    osc.connect(gain); gain.connect(master);
+    osc.start(start); osc.stop(start + duration + 0.03);
+  }
+  function play(name) {
+    if (!init() || muted) return;
+    const seq = (notes) => notes.forEach(n => tone(n[0], n[1], n[2] || 'sine', n[3] ?? 0.14, n[4] || 0, n[5] ?? null));
+    switch (name) {
+      case 'click': seq([[620,.055,'triangle',.075]]); break;
+      case 'start': seq([[392,.12,'sine',.15,0],[523,.16,'sine',.16,.11],[784,.24,'sine',.17,.24]]); break;
+      case 'join': seq([[523,.10,'triangle',.13,0],[659,.12,'triangle',.14,.09],[784,.17,'triangle',.14,.18]]); break;
+      case 'round': seq([[660,.10,'sine',.13,0],[880,.18,'sine',.15,.12]]); break;
+      case 'end': seq([[659,.14,'sine',.13,0],[523,.16,'sine',.13,.15],[392,.28,'sine',.14,.32]]); break;
+      case 'correct': seq([[740,.08,'triangle',.12,0],[988,.15,'triangle',.13,.08]]); break;
+    }
+  }
+  function stopMusic() {
+    if (musicTimer) clearInterval(musicTimer);
+    musicTimer = null;
+  }
+  function startMusic(mode) {
+    musicMode = mode;
+    if (!init()) return;
+    stopMusic();
+    musicStep = 0;
+    // 잔잔한 로비 멜로디와 게임 중 긴장감 있는 반복 패턴
+    const lobby = [261.63,329.63,392,329.63,293.66,349.23,440,349.23];
+    const game = [220,261.63,329.63,261.63,196,246.94,293.66,246.94];
+    const pattern = mode === 'game' ? game : lobby;
+    const tick = () => {
+      if (!ctx || muted) return;
+      const f = pattern[musicStep % pattern.length];
+      tone(f, mode === 'game' ? .42 : .58, 'sine', mode === 'game' ? .035 : .025);
+      if (mode === 'game' && musicStep % 2 === 0) tone(f * 2, .20, 'triangle', .018, .08);
+      musicStep++;
+    };
+    tick();
+    musicTimer = setInterval(tick, mode === 'game' ? 620 : 920);
+  }
+  function setMuted(value) {
+    muted = value;
+    if (master && ctx) master.gain.setTargetAtTime(muted ? 0 : 0.22, ctx.currentTime, .04);
+    const button = document.getElementById('soundToggle');
+    if (button) {
+      button.textContent = muted ? '소리 켜기 ♪' : '소리 끄기 ♪';
+      button.setAttribute('aria-pressed', String(muted));
+    }
+    if (!muted && musicTimer === null) startMusic(musicMode);
+  }
+  function toggle() { setMuted(!muted); if (!muted) play('click'); }
+  function unlock() { init(); }
+  return { play, startMusic, stopMusic, setMuted, toggle, unlock, get muted() { return muted; } };
+})();
+
+// 첫 사용자 입력에서 오디오를 활성화하고, 버튼 클릭 효과음을 재생합니다.
+document.addEventListener('pointerdown', (event) => {
+  if (event.target.closest('#soundToggle')) return;
+  GameAudio.unlock();
+  if (event.target.closest('button')) GameAudio.play('click');
+}, true);
+
 //--------서버 연결 및 메시지 처리--------
 function connect() {
   try { socket = new WebSocket(socketUrl); }
   catch (error) { setConnection(false); toast('WebSocket 연결을 시작하지 못했습니다.'); return; }
-  socket.addEventListener('open', () => { setConnection(true); toast('게임 서버에 연결되었습니다.'); send('listrooms'); });
+  socket.addEventListener('open', () => { setConnection(true); toast('게임 서버에 연결되었습니다.'); send('listrooms'); GameAudio.startMusic('lobby'); });
   socket.addEventListener('message', (event) => {
     let data;
     try { data = JSON.parse(event.data); } catch { return; }
@@ -65,12 +159,22 @@ function connect() {
       case 'room_list':
         roomList = data.rooms || []; renderRooms(); break;
       case 'makeroom_ok':
+        GameAudio.play('join');
+        updateRoom(data);
+        showPage('room');
+        break;
       case 'room_joined':
+        GameAudio.play('join');
+        updateRoom(data);
+        showPage('room');
+        break;
       case 'room_update':
         updateRoom(data);
-        if (data.type !== 'room_update') showPage('room');
         break;
       case 'game_started':
+        GameAudio.play('start');
+        GameAudio.startMusic('game');
+        lastRound = null;
         gameActive = true;
         hasSurrendered = false;
 
@@ -92,6 +196,8 @@ function connect() {
         break;
       case 'game_round':
         gameActive = true;
+        if (lastRound !== null && Number(data.round) !== lastRound) GameAudio.play('round');
+        lastRound = Number(data.round);
         updateGameRound(data);
         break;
       case 'word_result':
@@ -107,6 +213,7 @@ function connect() {
         }
         break;
       case 'word_accepted':
+        GameAudio.play('correct');
         $('gameStatus').textContent = data.message || '정답입니다!';
         $('wordInput').value = '';
         $('wordInput').disabled = true; $('submitWord').disabled = true;
@@ -136,6 +243,9 @@ function connect() {
         $('wordInput').value = '';
         break;
       case 'game_over':
+        GameAudio.play('end');
+        GameAudio.startMusic('lobby');
+        lastRound = null;
         gameActive = false;
         hasSurrendered = false;
 
@@ -160,7 +270,7 @@ function connect() {
       case 'room_settings_ok':
         toast(data.message || '방 설정을 변경했습니다.'); break;
       case 'room_left':
-        currentRoomId = ''; currentRoomOwner = ''; currentMembers = []; gameActive = false; stopGameTimer();
+        currentRoomId = ''; currentRoomOwner = ''; currentMembers = []; gameActive = false; stopGameTimer(); GameAudio.startMusic('lobby');
         showPage('lobby'); send('listrooms'); toast('방에서 나왔습니다.'); break;
       case 'error':
         if (data.code === 'nickname_taken') {
@@ -388,6 +498,8 @@ $('returnToRoom').addEventListener('click', () => {
     showPage('room');
     send('listrooms');
 });
+
+$('soundToggle').addEventListener('click', (event) => { event.stopPropagation(); GameAudio.toggle(); });
 
 //--------프로그램 시작--------
 connect();
