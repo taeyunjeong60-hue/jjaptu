@@ -64,7 +64,7 @@ const GameAudio = (() => {
     if (!ctx) {
       ctx = new AudioContextClass();
       master = ctx.createGain();
-      master.gain.value = muted ? 0 : 0.22;
+      master.gain.value = muted ? 0 : 0.6;
       master.connect(ctx.destination);
     }
     if (ctx.state === 'suspended') ctx.resume();
